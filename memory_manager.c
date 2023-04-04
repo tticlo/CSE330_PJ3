@@ -9,24 +9,23 @@
 #include <linux/time.h>
 #include <linux/slab.h>
 
-//Two Thread Pointers
-struct task_sreuct *producer_thread;
 
-void Display(void)
-{
-	//printk("Test: buffSize = %d", buffSize);
-	//printk("Test: prod = %d", prod);
-	//printk("Test: cons = %d", cons);
-	//printk("Test: uuid = %d", uuid);
-}
 
+int pid;
+
+module_param(pid, int, 0);
+
+
+//void Display(void)
+//{
+//	printk("Test: prod = %d", prod);
+//}
 
 static int ModuleInit(void)
 {
 
 	return 0;
 }
-
 
 static void ModuleExit(void)
 {
