@@ -9,26 +9,8 @@
 #include <linux/time.h>
 #include <linux/slab.h>
 
-
-
 int pid;
 module_param(pid, int, 0);
-
-
-
-//{
-//	unsigned long address;
-//	for(address = vma->vm_start; address < vma->vm_end; address += PAGE_SIZE)
-//	{
-//
-//	}
-//}
-
-
-//void Display(void)
-//{
-//	printk("Test: prod = %d", prod);
-//}
 
 static int ModuleInit(void)
 {
@@ -63,11 +45,8 @@ static int ModuleInit(void)
 	    //{
 	    //    return;
 	    //}
-
 	}
     }
-
-
 
     return 0;
 }
