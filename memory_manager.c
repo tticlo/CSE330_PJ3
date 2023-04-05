@@ -12,8 +12,17 @@
 
 
 int pid;
-
 module_param(pid, int, 0);
+
+
+
+//{
+//	unsigned long address;
+//	for(address = vma->vm_start; address < vma->vm_end; address += PAGE_SIZE)
+//	{
+//
+//	}
+//}
 
 
 //void Display(void)
@@ -23,8 +32,32 @@ module_param(pid, int, 0);
 
 static int ModuleInit(void)
 {
+    //Current Executing process = task 
+    struct task_struct *task;
 
-	return 0;
+    //Memory Management of task 
+    struct mm_struct *mm = task->mm;
+
+    //Virtual Memory Area
+    struct vm_area_struct *vma;
+
+   //For loop traverses the VMA 
+    for(vma = mm->mmap; vma; vma->vm_next)
+    {
+	unsigned long address;
+	unsigned long start = vma->vm_start;
+	unsigned long end = vma->vm_end;
+
+	//For loop traverses each page in the VMA
+        for(address = start; address < end; address += PAGE_SIZE)
+	{
+
+	}
+    }
+
+
+
+    return 0;
 }
 
 static void ModuleExit(void)
