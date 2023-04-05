@@ -41,6 +41,13 @@ static int ModuleInit(void)
     //Virtual Memory Area
     struct vm_area_struct *vma;
 
+    //Five-Level Page Table
+    pgd_t *pgd;
+    p4d_t *p4d;
+    pmd_t *pmd;
+    pud_t *pud;
+    pte_t *pte;
+
    //For loop traverses the VMA 
     for(vma = mm->mmap; vma; vma->vm_next)
     {
@@ -51,6 +58,11 @@ static int ModuleInit(void)
 	//For loop traverses each page in the VMA
         for(address = start; address < end; address += PAGE_SIZE)
 	{
+	    //pgd = pgd_offest(mm, address);
+	    //if(pgd_none(*pgd) || pgd_bad(*pgd))
+	    //{
+	    //    return;
+	    //}
 
 	}
     }
