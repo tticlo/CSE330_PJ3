@@ -20,48 +20,29 @@ static struct hrtimer timer;
 ktime_t timeInterval;
 unsigned long timer_interval_ns = 10e0;
 
-
+int counter = 0;
 
 //enum hrtimer_restart no_restart_callback(struct hrtimer *timer)
 //{
 //    ktime_t currentTime, interval;
-//    CurrentTime = ktime_get();
+//    currentTime = ktime_get();
 //    interval = ktime_set(0, timer_interval_ns);
 //    hrtimer_forward(timer, currentTime, interval);
 //
-//    return HRTIMER_NORESTART;
+//    return HRTIMER_RESTART;
 //}
-
-
-
-void StartTimer(void)
-{
-    //Sets a timer for 10 seconds
-    timeInterval = ktime_set(10, 0);
-
-    //Initialize the timer
-    hrtimer_init(&timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-
-    //Start timer
-    hrtimer_start(&timer, timeInterval, HRTIMER_MODE_REL);
-}
-
-
-void PageTableWalk(void)
-{
-
-}
-
 
 static int ModuleInit(void)
 {
+    printk("Entered ModuleInit");
+
     //Current Executing process = task 
     struct task_struct *task;
 
     //Memory Management of task 
     struct mm_struct *mm = task->mm;
 
-    //Virtual Memory Area
+   //Virtual Memory Area
     struct vm_area_struct *vma;
 
     //Five-Level Page Table
@@ -71,7 +52,19 @@ static int ModuleInit(void)
     pud_t *pud;
     pte_t *ptep, pte;
 
-   //For loop traverses the VMA 
+    printk("Read in all variables");
+ 
+//    ktime_t currentTime, interval;
+//    currentTime = ktime_get();
+//    interval = ktime_set(0, timer_interval_ns);
+//
+//    hrtimer_init(&timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+//    timer.function = &no_restart_callback;
+//    hrtimer_start(&timer, timeInterval, HRTIMER_MODE_REL);
+//
+//
+//
+    //For loop traverses the VMA 
     for(vma = mm->mmap; vma; vma->vm_next)
     {
 	unsigned long address;
@@ -102,19 +95,29 @@ static int ModuleInit(void)
 	        return 0;
 	    }
 	    
-	    //Get pte and check if its bad or exists
+            //Get pte and check if its bad or exists
 	    pmd = pmd_offset(pud, address);
 	    if(pmd_none(*pmd) || pmd_bad(*pmd))
 	    {
 	        return 0;
 	    }
-	    
-	    ptep = pte_offset_map(pmd, address);
-	    if (!ptep)
-	    {
-	        return 0;
-	    } 
-	    pte = *ptep;
+//	    
+//	    //Gets and stores the pte
+//	    ptep = pte_offset_map(pmd, address);
+//	    pte = *ptep;
+//
+//	    //Increase teh counter if the pte has been acessed
+//	   // if(ptep && ptep_test_and_clear_young(vma, address, ptep))
+//	   //{
+//          //     counter += 1;
+//	   // }
+//	   // else
+//	   // {
+//	   //     return 0;
+//	   // }
+//
+//	    //Unamp virtual memoory
+//	    pte_unmap(ptep);
 	}
     }
     return 0;
