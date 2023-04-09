@@ -11,23 +11,26 @@
 #include <linux/mm_types.h>
 #include <linux/pgtable.h>
 #include <linux/hrtimer.h>
-#include <linux/mm.h>
 
 //Timer Variables
 static struct hrtimer hr_timer;
 static struct hrtimer no_restart_hr_timer;
-unsigned long timer_interval_ns = 3e9;
+unsigned long timer_interval_ns = 10e9;
 static int timer_count = 0;
 
 //Declare variables as readable and rritasble
 int pid = 0;
 module_param(pid, int, S_IRUSR | S_IWUSR);
 int counter = 0;
+long rss;
 
-//Unsure
-//struct task_struct *task = get_current();
-//ktime_t timeInterval;
-
+int ptep_test_and_clear_young(struct vm_area_struct *vma, unsigned long addr, pte_t *ptep)
+{
+    int ret = 0;
+    if (pte_young(*ptep))
+        ret = test_and_clear_bit(_PAGE_BIT_ACCESSED, (unsigned long *) &ptep->pte);
+    return ret;
+}
 
 enum hrtimer_restart no_restart_callback(struct hrtimer *timer)
 {
@@ -37,7 +40,7 @@ enum hrtimer_restart no_restart_callback(struct hrtimer *timer)
 enum hrtimer_restart timer_callback(struct hrtimer *timer)
 {
     timer_count += 1;
-    printk(KERN_INFO "The timer was fired\n");
+    printk(KERN_INFO "PID %d: RSS=%d KB, SWAP=%d KB, WSS=%d KB\n", pid, rss, pid, pid);
     if(timer_count < 3)
     {
         ktime_t ktime = ktime_set(0, timer_interval_ns);
@@ -68,8 +71,7 @@ void timer_init(void)
 
 
 void test(void)
-{
-    
+{    
     //Current Executing process = task 
     struct task_struct *task = get_current();
 
@@ -117,6 +119,8 @@ void test(void)
 	    if(ptep && ptep_test_and_clear_young(vma, address, ptep))
 	    {
                 counter += 1;
+		rss += PAGE_SIZE;
+                printk(KERN_INFO "Counter Increased\n");
 	    }
 	    else
 	    {
@@ -136,19 +140,8 @@ static int ModuleInit(void)
     //Call Timer Method
     timer_init();
 
-    //Four Arguments
-    printk(KERN_INFO "PID %d: RSS=%d KB, SWAP=%d KB, WSS=%d KB\n", pid, pid, pid, pid);
-
+    //Page Walk
     test();
-
-//    ktime_t currentTime, interval;
-//    currentTime = ktime_get();
-//    interval = ktime_set(0, timer_interval_ns);
-//
-//    hrtimer_init(&timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-//    timer.function = &no_restart_callback;
-//    hrtimer_start(&timer, timeInterval, HRTIMER_MODE_REL);
-//
 
     printk(KERN_INFO "Got to the end\n");
 
