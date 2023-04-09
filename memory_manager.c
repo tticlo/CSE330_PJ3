@@ -97,25 +97,22 @@ void test(void)
 	//For loop traverses each page in the VMA
         for(address = start; address < end; address += PAGE_SIZE)
 	{
-	    //Gets pgd and checks if its bad or exists
+	    //Checks if pgd, p4d, pud, and pmd is bad or exists
 	    pgd = pgd_offset(mm, address);
 	    if(pgd_none(*pgd) || pgd_bad(*pgd)){return;}
-	    
-	    //Gets p4d and checks if its bad or exists
-	    //p4d = p4d_offset(pgd, address);
-	    //if (p4d_none(*p4d) || p4d_bad(*p4d)){return;}
 
-	    //Gets pud and checks if its bad or exists
-	    //pud = pud_offset(p4d, address);
-	    //if(pud_none(*pud) || pud_bad(*pud)){return;}
+	    p4d = p4d_offset(pgd, address);
+	    if (p4d_none(*p4d) || p4d_bad(*p4d)){return;}
 
-	    //Get pmd and check if its bad or exists
-	    //pmd = pmd_offset(pud, address);
-	    //if(pmd_none(*pmd) || pmd_bad(*pmd)){return;}
+	    pud = pud_offset(p4d, address);
+	    if(pud_none(*pud) || pud_bad(*pud)){return;}
+
+	    pmd = pmd_offset(pud, address);
+	    if(pmd_none(*pmd) || pmd_bad(*pmd)){return;}
 
 	    //Gets and stores the pte
-	    //ptep = pte_offset_map(pmd, address);
-	    //pte = *ptep;
+	    ptep = pte_offset_map(pmd, address);
+	    pte = *ptep;
 
 	    //Increase teh counter if the pte has been acessed
 	    //if(ptep && ptep_test_and_clear_young(vma, address, ptep))
@@ -128,7 +125,7 @@ void test(void)
 	    //}
 
 	    //Unamp virtual memoory
-	    //pte_unmap(ptep);
+	    pte_unmap(ptep);
 	}
     }
 }
