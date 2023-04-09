@@ -15,7 +15,7 @@
 //Timer Variables
 static struct hrtimer hr_timer;
 static struct hrtimer no_restart_hr_timer;
-unsigned long timer_interval_ns = 10e9;
+unsigned long timer_interval_ns = 3e9;
 static int timer_count = 0;
 
 //Declare variables as readable and rritasble
@@ -89,7 +89,11 @@ void test(void)
 
     //For loop traverses the VMA 
     for(vma = mm->mmap; vma; vma->vm_next)
-    {        
+    {
+
+
+        printk(KERN_INFO "Inside For Loop\n");
+
 	//unsigned long address;
 	//unsigned long start = vma->vm_start;
 	//unsigned long end = vma->vm_end;
@@ -153,39 +157,7 @@ static int ModuleInit(void)
 //    timer.function = &no_restart_callback;
 //    hrtimer_start(&timer, timeInterval, HRTIMER_MODE_REL);
 //
-//
-//
-//
-//
-//
-//	    
-//	    
-//	    //Gets and stores the pte
-//	    ptep = pte_offset_map(pmd, address);
-//	    pte = *ptep;
-//
-//	    //Increase teh counter if the pte has been acessed
-//	   // if(ptep && ptep_test_and_clear_young(vma, address, ptep))
-//	   //{
-//          //     counter += 1;
-//	   // }
-//	   // else
-//	   // {
-//	   //     return 0;
-//	   // }
-//
-//	    //Unamp virtual memoory
-//	    pte_unmap(ptep);
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
+
     printk(KERN_INFO "Got to the end\n");
 
     return 0;
