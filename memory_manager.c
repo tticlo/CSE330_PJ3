@@ -11,6 +11,7 @@
 #include <linux/mm_types.h>
 #include <linux/pgtable.h>
 #include <linux/hrtimer.h>
+#include <linux/mm.h>
 
 //Timer Variables
 static struct hrtimer hr_timer;
@@ -21,13 +22,11 @@ static int timer_count = 0;
 //Declare variables as readable and rritasble
 int pid = 0;
 module_param(pid, int, S_IRUSR | S_IWUSR);
+int counter = 0;
 
 //Unsure
 //struct task_struct *task = get_current();
-
 //ktime_t timeInterval;
-
-//int counter = 0;
 
 
 enum hrtimer_restart no_restart_callback(struct hrtimer *timer)
@@ -114,15 +113,15 @@ void test(void)
 	    ptep = pte_offset_map(pmd, address);
 	    pte = *ptep;
 
-	    //Increase teh counter if the pte has been acessed
-	    //if(ptep && ptep_test_and_clear_young(vma, address, ptep))
-	    //{
-            //    counter += 1;
-	    //}
-	    //else
-	    //{
-	    //    return 0;
-	    //}
+	    //Check if pte exists and if it has been accessed recently
+	    if(ptep && ptep_test_and_clear_young(vma, address, ptep))
+	    {
+                counter += 1;
+	    }
+	    else
+	    {
+	        return;
+	    }
 
 	    //Unamp virtual memoory
 	    pte_unmap(ptep);
