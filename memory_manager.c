@@ -88,22 +88,18 @@ void test(void)
     pte_t *ptep, pte;
 
     //For loop traverses the VMA 
-    for(vma = mm->mmap; vma; vma->vm_next)
+    for(vma = mm->mmap; vma; vma = vma->vm_next)
     {
-
-
-        printk(KERN_INFO "Inside For Loop\n");
-
-	//unsigned long address;
-	//unsigned long start = vma->vm_start;
-	//unsigned long end = vma->vm_end;
+	unsigned long address;
+	unsigned long start = vma->vm_start;
+	unsigned long end = vma->vm_end;
 
 	//For loop traverses each page in the VMA
-        //for(address = start; address < end; address += PAGE_SIZE)
-	//{
+        for(address = start; address < end; address += PAGE_SIZE)
+	{
 	    //Gets pgd and checks if its bad or exists
-	    //pgd = pgd_offset(mm, address);
-	    //if(pgd_none(*pgd) || pgd_bad(*pgd)){return;}
+	    pgd = pgd_offset(mm, address);
+	    if(pgd_none(*pgd) || pgd_bad(*pgd)){return;}
 	    
 	    //Gets p4d and checks if its bad or exists
 	    //p4d = p4d_offset(pgd, address);
@@ -133,7 +129,7 @@ void test(void)
 
 	    //Unamp virtual memoory
 	    //pte_unmap(ptep);
-	//}
+	}
     }
 }
 
