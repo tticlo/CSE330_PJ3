@@ -70,7 +70,7 @@ void timer_init(void)
 }
 
 
-void test(void)
+void page_walk(void)
 {    
     //Current Executing process = task 
     struct task_struct *task = get_current();
@@ -141,7 +141,7 @@ static int ModuleInit(void)
     timer_init();
 
     //Page Walk
-    test();
+    page_walk();
 
     printk(KERN_INFO "Got to the end\n");
 
