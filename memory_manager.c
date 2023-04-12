@@ -89,57 +89,96 @@ void page_walk(void)
     pud_t *pud;
     pte_t *ptep, pte;
 
-    for_each_process(task)
-    {
-        mm = task->mm;
-	if(!mm){return;}
+        //For loop traverses the VMA 
+        for(vma = mm->mmap; vma; vma = vma->vm_next)
+        {
+	    unsigned long address;
+	    unsigned long start = vma->vm_start;
+	    unsigned long end = vma->vm_end;
 
-    }
-
-    //For loop traverses the VMA 
-    for(vma = mm->mmap; vma; vma = vma->vm_next)
-    {
-	unsigned long address;
-	unsigned long start = vma->vm_start;
-	unsigned long end = vma->vm_end;
-
-	//For loop traverses each page in the VMA
-        for(address = start; address < end; address += PAGE_SIZE)
-	{
-	    //Checks if pgd, p4d, pud, and pmd is bad or exists
-	    pgd = pgd_offset(mm, address);
-	    if(pgd_none(*pgd) || pgd_bad(*pgd)){return;}
-
-	    p4d = p4d_offset(pgd, address);
-	    if (p4d_none(*p4d) || p4d_bad(*p4d)){return;}
-
-	    pud = pud_offset(p4d, address);
-	    if(pud_none(*pud) || pud_bad(*pud)){return;}
-
-	    pmd = pmd_offset(pud, address);
-	    if(pmd_none(*pmd) || pmd_bad(*pmd)){return;}
-
-	    //Gets and stores the pte
-	    ptep = pte_offset_map(pmd, address);
-	    pte = *ptep;
-
-            rss += PAGE_SIZE;
-
-	    //Check if pte exists and if it has been accessed recently
-	    if(ptep_test_and_clear_young(vma, address, ptep))
+	    //For loop traverses each page in the VMA
+            for(address = start; address < end; address += PAGE_SIZE)
 	    {
-                counter += 1;
-		wss += PAGE_SIZE;
-	    }
-	    else
-	    {
-	        return;
-	    }
+	        //Checks if pgd, p4d, pud, and pmd is bad or exists
+	        pgd = pgd_offset(mm, address);
+	        if(pgd_none(*pgd) || pgd_bad(*pgd)){return;}
 
-	    //Unamp virtual memoory
-	    pte_unmap(ptep);
-	}
-    }
+	        p4d = p4d_offset(pgd, address);
+	        if (p4d_none(*p4d) || p4d_bad(*p4d)){return;}
+
+	        pud = pud_offset(p4d, address);
+	        if(pud_none(*pud) || pud_bad(*pud)){return;}
+
+	        pmd = pmd_offset(pud, address);
+	        if(pmd_none(*pmd) || pmd_bad(*pmd)){return;}
+
+	        //Gets and stores the pte
+	        ptep = pte_offset_map(pmd, address);
+	        pte = *ptep;
+
+                rss += PAGE_SIZE;
+
+	        //Check if pte exists and if it has been accessed recently
+	        if(ptep_test_and_clear_young(vma, address, ptep))
+	        {
+                    counter += 1;
+		    wss += PAGE_SIZE;
+	        }
+	        else
+	        {
+	            return;
+	        }
+
+	        //Unamp virtual memoory
+	        pte_unmap(ptep);
+	    }
+        }
+
+
+//    //For loop traverses the VMA 
+//    for(vma = mm->mmap; vma; vma = vma->vm_next)
+//    {
+//	unsigned long address;
+//	unsigned long start = vma->vm_start;
+//	unsigned long end = vma->vm_end;
+//
+//	//For loop traverses each page in the VMA
+//        for(address = start; address < end; address += PAGE_SIZE)
+//	{
+//	    //Checks if pgd, p4d, pud, and pmd is bad or exists
+//	    pgd = pgd_offset(mm, address);
+//	    if(pgd_none(*pgd) || pgd_bad(*pgd)){return;}
+//
+//	    p4d = p4d_offset(pgd, address);
+//	    if (p4d_none(*p4d) || p4d_bad(*p4d)){return;}
+//
+//	    pud = pud_offset(p4d, address);
+//	    if(pud_none(*pud) || pud_bad(*pud)){return;}
+//
+//	    pmd = pmd_offset(pud, address);
+//	    if(pmd_none(*pmd) || pmd_bad(*pmd)){return;}
+//
+//	    //Gets and stores the pte
+//	    ptep = pte_offset_map(pmd, address);
+//	    pte = *ptep;
+//
+//            rss += PAGE_SIZE;
+//
+//	    //Check if pte exists and if it has been accessed recently
+//	    if(ptep_test_and_clear_young(vma, address, ptep))
+//	    {
+//                counter += 1;
+//		wss += PAGE_SIZE;
+//	    }
+//	    else
+//	    {
+//	        return;
+//	    }
+//
+//	    //Unamp virtual memoory
+//	    pte_unmap(ptep);
+//	}
+//    }
 }
 
 static int ModuleInit(void)
