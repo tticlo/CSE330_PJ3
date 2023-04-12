@@ -33,11 +33,6 @@ int ptep_test_and_clear_young(struct vm_area_struct *vma, unsigned long addr, pt
     return ret;
 }
 
-enum hrtimer_restart no_restart_callback(struct hrtimer *timer)
-{
-    return HRTIMER_NORESTART;
-}
-
 enum hrtimer_restart timer_callback(struct hrtimer *timer)
 {
     timer_count += 1;
@@ -46,6 +41,7 @@ enum hrtimer_restart timer_callback(struct hrtimer *timer)
     {
         ktime_t ktime = ktime_set(0, timer_interval_ns);
         hrtimer_start( &hr_timer, ktime, HRTIMER_MODE_REL);
+	
         return HRTIMER_RESTART;
     }
     else
@@ -61,13 +57,6 @@ void timer_init(void)
     hrtimer_init( &hr_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL );
     hr_timer.function = &timer_callback;
     hrtimer_start( &hr_timer, ktime, HRTIMER_MODE_REL);
-
-//    //for the third case
-//    ktime_t ktime_no_restart = ktime_set( 0,timer_interval_ns);
-//    //Init & Start the hrtimer for NO_RESTART (That isOnly WSS)
-//    hrtimer_init(&no_restart_hr_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-//    no_restart_hr_timer.function = &no_restart_callback;
-//    hrtimer_start(&no_restart_hr_timer, ktime_no_restart, HRTIMER_MODE_REL);
 }
 
 
@@ -133,52 +122,6 @@ void page_walk(void)
 	        pte_unmap(ptep);
 	    }
         }
-
-
-//    //For loop traverses the VMA 
-//    for(vma = mm->mmap; vma; vma = vma->vm_next)
-//    {
-//	unsigned long address;
-//	unsigned long start = vma->vm_start;
-//	unsigned long end = vma->vm_end;
-//
-//	//For loop traverses each page in the VMA
-//        for(address = start; address < end; address += PAGE_SIZE)
-//	{
-//	    //Checks if pgd, p4d, pud, and pmd is bad or exists
-//	    pgd = pgd_offset(mm, address);
-//	    if(pgd_none(*pgd) || pgd_bad(*pgd)){return;}
-//
-//	    p4d = p4d_offset(pgd, address);
-//	    if (p4d_none(*p4d) || p4d_bad(*p4d)){return;}
-//
-//	    pud = pud_offset(p4d, address);
-//	    if(pud_none(*pud) || pud_bad(*pud)){return;}
-//
-//	    pmd = pmd_offset(pud, address);
-//	    if(pmd_none(*pmd) || pmd_bad(*pmd)){return;}
-//
-//	    //Gets and stores the pte
-//	    ptep = pte_offset_map(pmd, address);
-//	    pte = *ptep;
-//
-//            rss += PAGE_SIZE;
-//
-//	    //Check if pte exists and if it has been accessed recently
-//	    if(ptep_test_and_clear_young(vma, address, ptep))
-//	    {
-//                counter += 1;
-//		wss += PAGE_SIZE;
-//	    }
-//	    else
-//	    {
-//	        return;
-//	    }
-//
-//	    //Unamp virtual memoory
-//	    pte_unmap(ptep);
-//	}
-//    }
 }
 
 static int ModuleInit(void)
