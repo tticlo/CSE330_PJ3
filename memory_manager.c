@@ -23,6 +23,7 @@ int pid = 0;
 module_param(pid, int, S_IRUSR | S_IWUSR);
 int counter = 0;
 long rss;
+long wss;
 
 int ptep_test_and_clear_young(struct vm_area_struct *vma, unsigned long addr, pte_t *ptep)
 {
@@ -40,7 +41,7 @@ enum hrtimer_restart no_restart_callback(struct hrtimer *timer)
 enum hrtimer_restart timer_callback(struct hrtimer *timer)
 {
     timer_count += 1;
-    printk(KERN_INFO "PID %d: RSS=%d KB, SWAP=%d KB, WSS=%d KB\n", pid, rss, pid, pid);
+    printk(KERN_INFO "PID %d: RSS=%d KB, SWAP=%d KB, WSS=%d KB\n", pid, rss, pid, wss);
     if(timer_count < 3)
     {
         ktime_t ktime = ktime_set(0, timer_interval_ns);
@@ -61,12 +62,12 @@ void timer_init(void)
     hr_timer.function = &timer_callback;
     hrtimer_start( &hr_timer, ktime, HRTIMER_MODE_REL);
 
-    //for the third case
-    ktime_t ktime_no_restart = ktime_set( 0,timer_interval_ns);
-    //Init & Start the hrtimer for NO_RESTART (That isOnly WSS)
-    hrtimer_init(&no_restart_hr_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-    no_restart_hr_timer.function = &no_restart_callback;
-    hrtimer_start(&no_restart_hr_timer, ktime_no_restart, HRTIMER_MODE_REL);
+//    //for the third case
+//    ktime_t ktime_no_restart = ktime_set( 0,timer_interval_ns);
+//    //Init & Start the hrtimer for NO_RESTART (That isOnly WSS)
+//    hrtimer_init(&no_restart_hr_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+//    no_restart_hr_timer.function = &no_restart_callback;
+//    hrtimer_start(&no_restart_hr_timer, ktime_no_restart, HRTIMER_MODE_REL);
 }
 
 
@@ -74,19 +75,26 @@ void page_walk(void)
 {    
     //Current Executing process = task 
     struct task_struct *task = get_current();
-
+    
     //Memory Management of task 
     struct mm_struct *mm = task->mm;
-
+    
     //Virtual Memory Area
     struct vm_area_struct *vma;
-
+    
     //Five-Level Page Table
     pgd_t *pgd;
     p4d_t *p4d;
     pmd_t *pmd;
     pud_t *pud;
     pte_t *ptep, pte;
+
+    for_each_process(task)
+    {
+        mm = task->mm;
+	if(!mm){return;}
+
+    }
 
     //For loop traverses the VMA 
     for(vma = mm->mmap; vma; vma = vma->vm_next)
@@ -115,12 +123,13 @@ void page_walk(void)
 	    ptep = pte_offset_map(pmd, address);
 	    pte = *ptep;
 
+            rss += PAGE_SIZE;
+
 	    //Check if pte exists and if it has been accessed recently
-	    if(ptep && ptep_test_and_clear_young(vma, address, ptep))
+	    if(ptep_test_and_clear_young(vma, address, ptep))
 	    {
                 counter += 1;
-		rss += PAGE_SIZE;
-                printk(KERN_INFO "Counter Increased\n");
+		wss += PAGE_SIZE;
 	    }
 	    else
 	    {
