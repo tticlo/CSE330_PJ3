@@ -92,11 +92,9 @@ void page_walk(void)
 	    {
                 wss += PAGE_SIZE;
      	    }
-
-	    //Calcualt ethe swap
-	    if(pte && pte_file(pte))
+	    else
 	    {
-
+                swap += PAGE_SIZE;
 	    }
 
 	    //Unamp virtual memoory
