@@ -11,6 +11,7 @@
 #include <linux/mm_types.h>
 #include <linux/pgtable.h>
 #include <linux/hrtimer.h>
+#include <linux/mm.h>
 
 //Timer Variables
 static struct hrtimer hr_timer;
@@ -22,8 +23,8 @@ static int timer_count = 0;
 int pid = 0;
 module_param(pid, int, S_IRUSR | S_IWUSR);
 int counter = 0;
-long rss;
-long wss;
+unsigned long rss = 0;
+unsigned long wss = 0;
 
 int ptep_test_and_clear_young(struct vm_area_struct *vma, unsigned long addr, pte_t *ptep)
 {
@@ -36,7 +37,7 @@ int ptep_test_and_clear_young(struct vm_area_struct *vma, unsigned long addr, pt
 enum hrtimer_restart timer_callback(struct hrtimer *timer)
 {
     timer_count += 1;
-    printk(KERN_INFO "PID %d: RSS=%d KB, SWAP=%d KB, WSS=%d KB\n", pid, rss, pid, wss);
+    printk(KERN_INFO "PID %d: RSS=%lu KB, SWAP=%d KB, WSS=%lu KB\n", pid, rss, pid, wss);
     if(timer_count < 3)
     {
         ktime_t ktime = ktime_set(0, timer_interval_ns);
@@ -58,7 +59,6 @@ void timer_init(void)
     hr_timer.function = &timer_callback;
     hrtimer_start( &hr_timer, ktime, HRTIMER_MODE_REL);
 }
-
 
 void page_walk(void)
 {    
@@ -85,9 +85,13 @@ void page_walk(void)
 	    unsigned long start = vma->vm_start;
 	    unsigned long end = vma->vm_end;
 
+            unsigned long pageNumb = vma_pages(vma);
+	    rss += pageNumb;
+
 	    //For loop traverses each page in the VMA
             for(address = start; address < end; address += PAGE_SIZE)
 	    {
+                //rss += PAGE_SIZE;
 	        //Checks if pgd, p4d, pud, and pmd is bad or exists
 	        pgd = pgd_offset(mm, address);
 	        if(pgd_none(*pgd) || pgd_bad(*pgd)){return;}
@@ -105,13 +109,11 @@ void page_walk(void)
 	        ptep = pte_offset_map(pmd, address);
 	        pte = *ptep;
 
-                rss += PAGE_SIZE;
-
 	        //Check if pte exists and if it has been accessed recently
 	        if(ptep_test_and_clear_young(vma, address, ptep))
 	        {
+                    wss += 1;
                     counter += 1;
-		    wss += PAGE_SIZE;
 	        }
 	        else
 	        {
@@ -122,6 +124,8 @@ void page_walk(void)
 	        pte_unmap(ptep);
 	    }
         }
+	//wss *= PAGE_SIZE;
+	//rss *= PAGE_SIZE;
 }
 
 static int ModuleInit(void)
