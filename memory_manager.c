@@ -34,33 +34,6 @@ int ptep_test_and_clear_young(struct vm_area_struct *vma, unsigned long addr, pt
     return ret;
 }
 
-enum hrtimer_restart timer_callback(struct hrtimer *timer)
-{
-    timer_count += 1;
-    page_walk();
-    printk(KERN_INFO "PID %d: RSS=%lu KB, SWAP=%d KB, WSS=%lu KB\n", pid, rss, pid, wss);
-    if(timer_count < 3)
-    {
-        ktime_t ktime = ktime_set(0, timer_interval_ns);
-        hrtimer_start( &hr_timer, ktime, HRTIMER_MODE_REL);
-	
-        return HRTIMER_RESTART;
-    }
-    else
-    {
-        return HRTIMER_NORESTART;
-    }
-}
-
-void timer_init(void)
-{
-    //for first two test cases
-    ktime_t ktime = ktime_set(0, timer_interval_ns);
-    hrtimer_init( &hr_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL );
-    hr_timer.function = &timer_callback;
-    hrtimer_start( &hr_timer, ktime, HRTIMER_MODE_REL);
-}
-
 void page_walk(void)
 {    
     //Current Executing process = task 
@@ -135,6 +108,33 @@ void page_walk(void)
 	    pte_unmap(ptep);
 	}
     }
+}
+
+enum hrtimer_restart timer_callback(struct hrtimer *timer)
+{
+    timer_count += 1;
+    page_walk();
+    printk(KERN_INFO "PID %d: RSS=%lu KB, SWAP=%d KB, WSS=%lu KB\n", pid, rss, pid, wss);
+    if(timer_count < 3)
+    {
+        ktime_t ktime = ktime_set(0, timer_interval_ns);
+        hrtimer_start( &hr_timer, ktime, HRTIMER_MODE_REL);
+	
+        return HRTIMER_RESTART;
+    }
+    else
+    {
+        return HRTIMER_NORESTART;
+    }
+}
+
+void timer_init(void)
+{
+    //for first two test cases
+    ktime_t ktime = ktime_set(0, timer_interval_ns);
+    hrtimer_init( &hr_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL );
+    hr_timer.function = &timer_callback;
+    hrtimer_start( &hr_timer, ktime, HRTIMER_MODE_REL);
 }
 
 static int ModuleInit(void)
