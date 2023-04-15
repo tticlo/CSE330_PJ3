@@ -51,6 +51,7 @@ void page_walk(void)
 
     unsigned long rss = 0;
     unsigned long wss = 0;
+    unsigned long swap = 0;
 
     //For loop traverses the VMA 
     for(vma = mm->mmap; vma; vma = vma->vm_next)
@@ -92,13 +93,19 @@ void page_walk(void)
                 wss += PAGE_SIZE;
      	    }
 
+	    //Calcualt ethe swap
+	    if(pte && pte_file(pte))
+	    {
+
+	    }
+
 	    //Unamp virtual memoory
 	    //pte_unmap(ptep);
 	}
 	rss += vma->vm_end - vma->vm_start;
     }
 
-    printk(KERN_INFO "PID %d: RSS=%lu KB, SWAP=%d KB, WSS=%lu KB\n", pid, rss/1024, 0, wss/1024);
+    printk(KERN_INFO "PID %d: RSS=%lu KB, SWAP=%d KB, WSS=%lu KB\n", pid, rss/1024, swap/1024, wss/1024);
 }
 
 enum hrtimer_restart timer_callback(struct hrtimer *timer)
