@@ -22,9 +22,6 @@ static int timer_count = 0;
 //Declare variables as readable and rritasble
 int pid = 0;
 module_param(pid, int, S_IRUSR | S_IWUSR);
-int counter = 0;
-unsigned long rss = 0;
-unsigned long wss = 0;
 
 int ptep_test_and_clear_young(struct vm_area_struct *vma, unsigned long addr, pte_t *ptep)
 {
@@ -38,7 +35,7 @@ void page_walk(void)
 {    
     //Current Executing process = task 
     struct task_struct *task = pid_task(find_vpid(pid),PIDTYPE_PID );
-    
+
     //Memory Management of task 
     struct mm_struct *mm = task->mm;
     
@@ -52,31 +49,28 @@ void page_walk(void)
     pud_t *pud;
     pte_t *ptep, pte;
 
+    unsigned long rss = 0;
+    unsigned long wss = 0;
+
     //For loop traverses the VMA 
     for(vma = mm->mmap; vma; vma = vma->vm_next)
     {
 	unsigned long address;
-	unsigned long start = vma->vm_start;
-	unsigned long end = vma->vm_end;
-
-        unsigned long pageNumb = vma_pages(vma);
-	rss += (pageNumb * PAGE_SIZE);
-
-	    //if(vma->vm_flags & VM_SHARED)
-	    //{
-            //    rss += vma->vm_end - vma->vm_start;
-	    //}
-	    //else
-	    //{
-            //    rss += 0;
-	    //}
+	    
+	//if(vma->vm_flags & VM_SHARED)
+	//{
+        //    rss += vma->vm_end - vma->vm_start;
+	//}
+	//else
+	//{
+        //    rss += 0;
+	//}
 
 	//For loop traverses each page in the VMA
-        for(address = start; address < end; address += PAGE_SIZE)
+        for(address = vma->vm_start; address < vma->vm_end; address += PAGE_SIZE)
 	{
-            //rss += PAGE_SIZE;
 	    //Checks if pgd, p4d, pud, and pmd is bad or exists
-	    pgd = pgd_offset(mm, address);
+	    pgd = pgd_offset(task->mm, address);
 	    if(pgd_none(*pgd) || pgd_bad(*pgd)){return;}
 
 	    p4d = p4d_offset(pgd, address);
@@ -91,30 +85,26 @@ void page_walk(void)
 	    //Gets and stores the pte
 	    ptep = pte_offset_map(pmd, address);
 	    pte = *ptep;
-
-	    rss += (pageNumb * PAGE_SIZE);
+	    
 	    //Check if pte exists and if it has been accessed recently
 	    if(ptep_test_and_clear_young(vma, address, ptep))
 	    {
-                wss += 1;
-                counter += 1;
+                wss += PAGE_SIZE;
      	    }
-	    else
-	    {
-	        return;
-	    }
 
 	    //Unamp virtual memoory
-	    pte_unmap(ptep);
+	    //pte_unmap(ptep);
 	}
+	rss += vma->vm_end - vma->vm_start;
     }
+
+    printk(KERN_INFO "PID %d: RSS=%lu KB, SWAP=%d KB, WSS=%lu KB\n", pid, rss/1024, 0, wss/1024);
 }
 
 enum hrtimer_restart timer_callback(struct hrtimer *timer)
 {
     timer_count += 1;
     page_walk();
-    printk(KERN_INFO "PID %d: RSS=%lu KB, SWAP=%d KB, WSS=%lu KB\n", pid, rss, pid, wss);
     if(timer_count < 3)
     {
         ktime_t ktime = ktime_set(0, timer_interval_ns);
