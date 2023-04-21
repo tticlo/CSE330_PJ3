@@ -103,15 +103,15 @@ void page_walk(void)
 	rss += vma->vm_end - vma->vm_start;
     }
 
-    printk(KERN_INFO "PID %d: RSS=%lu KB, SWAP=%d KB, WSS=%lu KB\n", pid, rss/1024, swap/1024, wss/1024);
+    printk(KERN_INFO "PID %d: RSS=%lu KB, SWAP=%lu KB, WSS=%lu KB\n", pid, rss/1024, swap/1024, wss/1024);
 }
 
 enum hrtimer_restart timer_callback(struct hrtimer *timer)
 {
-    timer_count += 1;
-    page_walk();
     if(timer_count < 3)
     {
+	timer_count += 1;
+	page_walk();
         ktime_t ktime = ktime_set(0, timer_interval_ns);
         hrtimer_start( &hr_timer, ktime, HRTIMER_MODE_REL);
 	
@@ -138,9 +138,6 @@ static int ModuleInit(void)
 
     //Call Timer Method
     timer_init();
-
-    //Page Walk
-    //page_walk();
 
     printk(KERN_INFO "Got to the end\n");
 
