@@ -40,7 +40,7 @@ void page_walk(void)
     struct mm_struct *mm = task->mm;
     
     //Virtual Memory Area
-    struct vm_area_struct *vma;
+    struct vm_area_struct *vma = task->mm->mmap;
     
     //Five-Level Page Table
     pgd_t *pgd;
@@ -53,35 +53,26 @@ void page_walk(void)
     unsigned long wss = 0;
     unsigned long swap = 0;
 
-    //For loop traverses the VMA 
-    for(vma = mm->mmap; vma; vma = vma->vm_next)
+	
+    while(vma)
     {
-	unsigned long address;
+        unsigned long address;
 	    
-	//if(vma->vm_flags & VM_SHARED)
-	//{
-        //    rss += vma->vm_end - vma->vm_start;
-	//}
-	//else
-	//{
-        //    rss += 0;
-	//}
-
 	//For loop traverses each page in the VMA
         for(address = vma->vm_start; address < vma->vm_end; address += PAGE_SIZE)
 	{
 	    //Checks if pgd, p4d, pud, and pmd is bad or exists
 	    pgd = pgd_offset(task->mm, address);
-	    if(pgd_none(*pgd) || pgd_bad(*pgd)){return;}
+	    if(pgd_none(*pgd) || pgd_bad(*pgd)){break;}
 
 	    p4d = p4d_offset(pgd, address);
-	    if (p4d_none(*p4d) || p4d_bad(*p4d)){return;}
+	    if (p4d_none(*p4d) || p4d_bad(*p4d)){break;}
 
 	    pud = pud_offset(p4d, address);
-	    if(pud_none(*pud) || pud_bad(*pud)){return;}
+	    if(pud_none(*pud) || pud_bad(*pud)){break;}
 
 	    pmd = pmd_offset(pud, address);
-	    if(pmd_none(*pmd) || pmd_bad(*pmd)){return;}
+	    if(pmd_none(*pmd) || pmd_bad(*pmd)){break;}
 
 	    //Gets and stores the pte
 	    ptep = pte_offset_map(pmd, address);
@@ -96,10 +87,29 @@ void page_walk(void)
 	    {
                 swap += PAGE_SIZE;
 	    }
+		
+	    rss += PAGE_SIZE;
 
 	    //Unamp virtual memoory
-	    //pte_unmap(ptep);
+	    pte_unmap(ptep);
 	}
+	    
+	vma = vam->vm_next;
+    }
+
+    //For loop traverses the VMA 
+    //for(vma = mm->mmap; vma; vma = vma->vm_next)
+    //{
+	//unsigned long address;
+	    
+	//if(vma->vm_flags & VM_SHARED)
+	//{
+        //    rss += vma->vm_end - vma->vm_start;
+	//}
+	//else
+	//{
+        //    rss += 0;
+	//}
 	rss += vma->vm_end - vma->vm_start;
     }
 
@@ -110,11 +120,10 @@ enum hrtimer_restart timer_callback(struct hrtimer *timer)
 {
     if(timer_count < 3)
     {
-	timer_count += 1;
 	page_walk();
         ktime_t ktime = ktime_set(0, timer_interval_ns);
-        hrtimer_start( &hr_timer, ktime, HRTIMER_MODE_REL);
-	
+        hrtimer_forward_now(&hr_timer,ms_to_ktime(10000));
+	timer_count += 1;
         return HRTIMER_RESTART;
     }
     else
@@ -129,7 +138,7 @@ void timer_init(void)
     ktime_t ktime = ktime_set(0, timer_interval_ns);
     hrtimer_init( &hr_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL );
     hr_timer.function = &timer_callback;
-    hrtimer_start( &hr_timer, ktime, HRTIMER_MODE_REL);
+    hrtimer_start( &hr_timer, ms_to_ktime(10000), HRTIMER_MODE_REL);
 }
 
 static int ModuleInit(void)
